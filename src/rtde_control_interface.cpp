@@ -13,7 +13,6 @@
 #include <iostream>
 #include <thread>
 
-
 namespace ur_rtde
 {
 static const std::string move_path_inject_id = "# inject move path\n";
@@ -46,6 +45,7 @@ RTDEControlInterface::RTDEControlInterface(std::string hostname, double frequenc
       use_upper_range_registers_(flags & FLAG_UPPER_RANGE_REGISTERS),
       no_wait_(flags & FLAG_NO_WAIT),
       custom_script_(flags & FLAG_CUSTOM_SCRIPT),
+      no_ext_ft_(flags & FLAG_NO_EXT_FT),
       ur_cap_port_(ur_cap_port),
       rt_priority_(rt_priority)
 {
@@ -55,7 +55,8 @@ RTDEControlInterface::RTDEControlInterface(std::string hostname, double frequenc
     if (!RTDEUtility::setRealtimePriority(rt_priority_))
     {
       std::cerr << "RTDEControlInterface: Warning! Failed to set realtime priority even though a realtime kernel is "
-                   "available." << std::endl;
+                   "available."
+                << std::endl;
     }
     else
     {
@@ -293,25 +294,23 @@ int RTDEControlInterface::getAsyncOperationProgress()
   auto AsyncStatus = getAsyncOperationProgressEx();
   if (AsyncStatus.isAsyncOperationRunning())
   {
-	  return AsyncStatus.progress();
+    return AsyncStatus.progress();
   }
   else
   {
-	  return (AsyncStatus.operationId() % 2) - 2; // toggle between -1 and -2 to mimic the old progress info scheme
+    return (AsyncStatus.operationId() % 2) - 2;  // toggle between -1 and -2 to mimic the old progress info scheme
   }
 }
 
-
 AsyncOperationStatus RTDEControlInterface::getAsyncOperationProgressEx()
 {
-  std::string output_int_register_key = "output_int_register_" + std::to_string(2+register_offset_);
+  std::string output_int_register_key = "output_int_register_" + std::to_string(2 + register_offset_);
   int32_t output_int_register_val;
   if (robot_state_->getStateData(output_int_register_key, output_int_register_val))
     return AsyncOperationStatus(output_int_register_val);
   else
     throw std::runtime_error("unable to get state data for specified key: " + output_int_register_key);
 }
-
 
 void RTDEControlInterface::waitForProgramRunning()
 {
@@ -668,9 +667,9 @@ bool RTDEControlInterface::setupRecipes(const double &frequency)
   rtde_->sendInputSetup(setp_input);
 
   // Recipe 14
-  std::vector<std::string> jog_input = {inIntReg(0),     inDoubleReg(0), inDoubleReg(1), inDoubleReg(2),
-                                        inDoubleReg(3),  inDoubleReg(4), inDoubleReg(5), inDoubleReg(6),
-                                        inDoubleReg(7),  inDoubleReg(8), inDoubleReg(9), inDoubleReg(10),
+  std::vector<std::string> jog_input = {inIntReg(0),     inDoubleReg(0),  inDoubleReg(1), inDoubleReg(2),
+                                        inDoubleReg(3),  inDoubleReg(4),  inDoubleReg(5), inDoubleReg(6),
+                                        inDoubleReg(7),  inDoubleReg(8),  inDoubleReg(9), inDoubleReg(10),
                                         inDoubleReg(11), inDoubleReg(12), inDoubleReg(13)};
   rtde_->sendInputSetup(jog_input);
 
@@ -692,18 +691,21 @@ bool RTDEControlInterface::setupRecipes(const double &frequency)
   rtde_->sendInputSetup(freedrive_mode_input);
 
   // Recipe 18
-  std::vector<std::string> external_ft_input = {inIntReg(0), "external_force_torque"};
-  rtde_->sendInputSetup(external_ft_input);
-
-  // Recipe 19
   std::vector<std::string> ft_rtde_input_enable = {inIntReg(0),    inIntReg(1),    inDoubleReg(0),
                                                    inDoubleReg(1), inDoubleReg(2), inDoubleReg(3),
                                                    inDoubleReg(4), inDoubleReg(5), inDoubleReg(6)};
   rtde_->sendInputSetup(ft_rtde_input_enable);
 
-  // Recipe 20 - STOPL and STOPJ
+  // Recipe 19 - STOPL and STOPJ
   std::vector<std::string> stopl_stopj_input = {inIntReg(0), inDoubleReg(0), inIntReg(1)};
   rtde_->sendInputSetup(stopl_stopj_input);
+
+  // Recipe 20 - external_force_torque should be last because its optional depending on flags
+  if (!no_ext_ft_)
+  {
+    std::vector<std::string> external_ft_input = {inIntReg(0), "external_force_torque"};
+    rtde_->sendInputSetup(external_ft_input);
+  }
 
   return true;
 }
@@ -726,9 +728,9 @@ void RTDEControlInterface::receiveCallback()
       {
         no_bytes_avail_cnt_ = 0;
         boost::system::error_code ec = rtde_->receiveData(robot_state_);
-        if(ec)
+        if (ec)
         {
-          if(ec == boost::asio::error::eof)
+          if (ec == boost::asio::error::eof)
           {
             std::cerr << "RTDEControlInterface: Robot closed the connection!" << std::endl;
           }
@@ -797,7 +799,7 @@ void RTDEControlInterface::receiveCallback()
         return;
         // is it save to throw exceptions in an ASIO async handler? If this line
         // is not disables, it will crash the application
-        //throw std::runtime_error("RTDEControlInterface: Could not reconnect to robot...");
+        // throw std::runtime_error("RTDEControlInterface: Could not reconnect to robot...");
       }
     }
   }
@@ -815,7 +817,7 @@ void RTDEControlInterface::stopL(double a, bool async)
 {
   RTDE::RobotCommand robot_cmd;
   robot_cmd.type_ = RTDE::RobotCommand::Type::STOPL;
-  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_20;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_19;
   if (async)
     robot_cmd.async_ = 1;
   else
@@ -828,7 +830,7 @@ void RTDEControlInterface::stopJ(double a, bool async)
 {
   RTDE::RobotCommand robot_cmd;
   robot_cmd.type_ = RTDE::RobotCommand::Type::STOPJ;
-  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_20;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_19;
   if (async)
     robot_cmd.async_ = 1;
   else
@@ -1156,8 +1158,8 @@ bool RTDEControlInterface::moveL(const std::vector<double> &transform, double sp
   return sendCommand(robot_cmd);
 }
 
-bool RTDEControlInterface::jogStart(const std::vector<double> &speeds, int feature,
-	double acc, const std::vector<double> &custom_frame)
+bool RTDEControlInterface::jogStart(const std::vector<double> &speeds, int feature, double acc,
+                                    const std::vector<double> &custom_frame)
 {
   RTDE::RobotCommand robot_cmd;
   robot_cmd.type_ = RTDE::RobotCommand::Type::JOG_START;
@@ -1723,7 +1725,6 @@ bool RTDEControlInterface::isPoseWithinSafetyLimits(const std::vector<double> &p
   }
 }
 
-
 bool RTDEControlInterface::startContactDetection(const std::vector<double> &direction)
 {
   RTDE::RobotCommand robot_cmd;
@@ -1732,7 +1733,6 @@ bool RTDEControlInterface::startContactDetection(const std::vector<double> &dire
   robot_cmd.val_ = direction;
   return sendCommand(robot_cmd);
 }
-
 
 bool RTDEControlInterface::stopContactDetection()
 {
@@ -1757,7 +1757,6 @@ bool RTDEControlInterface::stopContactDetection()
   }
 }
 
-
 bool RTDEControlInterface::readContactDetection()
 {
   RTDE::RobotCommand robot_cmd;
@@ -1780,7 +1779,6 @@ bool RTDEControlInterface::readContactDetection()
     return false;
   }
 }
-
 
 bool RTDEControlInterface::isJointsWithinSafetyLimits(const std::vector<double> &q)
 {
@@ -1979,11 +1977,19 @@ int RTDEControlInterface::getFreedriveStatus()
 
 bool RTDEControlInterface::setExternalForceTorque(const std::vector<double> &external_force_torque)
 {
-  RTDE::RobotCommand robot_cmd;
-  robot_cmd.type_ = RTDE::RobotCommand::Type::SET_EXTERNAL_FORCE_TORQUE;
-  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_18;
-  robot_cmd.val_ = external_force_torque;
-  return sendCommand(robot_cmd);
+  if (no_ext_ft_)
+  {
+    throw std::logic_error(
+        "The flag for not using the external_force_torque register is set, therefore this function cannot be used.");
+  }
+  else
+  {
+    RTDE::RobotCommand robot_cmd;
+    robot_cmd.type_ = RTDE::RobotCommand::Type::SET_EXTERNAL_FORCE_TORQUE;
+    robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_20;
+    robot_cmd.val_ = external_force_torque;
+    return sendCommand(robot_cmd);
+  }
 }
 
 bool RTDEControlInterface::ftRtdeInputEnable(bool enable, double sensor_mass,
@@ -1992,7 +1998,7 @@ bool RTDEControlInterface::ftRtdeInputEnable(bool enable, double sensor_mass,
 {
   RTDE::RobotCommand robot_cmd;
   robot_cmd.type_ = RTDE::RobotCommand::Type::FT_RTDE_INPUT_ENABLE;
-  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_19;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_18;
   if (enable)
     robot_cmd.ft_rtde_input_enable_ = 1;
   else
@@ -2011,7 +2017,7 @@ bool RTDEControlInterface::enableExternalFtSensor(bool enable, double sensor_mas
 {
   RTDE::RobotCommand robot_cmd;
   robot_cmd.type_ = RTDE::RobotCommand::Type::ENABLE_EXTERNAL_FT_SENSOR;
-  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_19;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_18;
   if (enable)
     robot_cmd.ft_rtde_input_enable_ = 1;
   else
@@ -2060,7 +2066,9 @@ bool RTDEControlInterface::setGravity(const std::vector<double> &direction)
   return sendCommand(robot_cmd);
 }
 
-bool RTDEControlInterface::getInverseKinematicsHasSolution(const std::vector<double> &x, const std::vector<double> &qnear, double max_position_error, double max_orientation_error)
+bool RTDEControlInterface::getInverseKinematicsHasSolution(const std::vector<double> &x,
+                                                           const std::vector<double> &qnear, double max_position_error,
+                                                           double max_orientation_error)
 {
   RTDE::RobotCommand robot_cmd;
   if (!qnear.empty())

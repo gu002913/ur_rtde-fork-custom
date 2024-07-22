@@ -192,6 +192,7 @@ class RTDEControlInterface
     FLAG_UPPER_RANGE_REGISTERS = 0x08,
     FLAG_NO_WAIT = 0x10,
     FLAG_CUSTOM_SCRIPT = 0x20,
+    FLAG_NO_EXT_FT = 0x40,
     FLAGS_DEFAULT = FLAG_UPLOAD_SCRIPT
   };
 
@@ -1135,6 +1136,7 @@ class RTDEControlInterface
   bool use_upper_range_registers_;
   bool no_wait_;
   bool custom_script_;
+  bool no_ext_ft_;
   bool custom_script_running_;
   int ur_cap_port_;
   int rt_priority_;
