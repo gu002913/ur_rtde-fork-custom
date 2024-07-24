@@ -89,8 +89,10 @@
     DOCKER_DRIVER: overlay2
     # See https://github.com/docker-library/docker/pull/166
     DOCKER_TLS_CERTDIR: ""
-    CIBW_BEFORE_ALL_LINUX: "yum install -y wget && bash ci/build-boost.sh"
-    CIBW_SKIP: "*-musllinux*"
+  CIBW_MANYLINUX_*_IMAGE:
+    "manylinux_2_28"
+  CIBW_BEFORE_ALL_LINUX: "yum install -y wget && bash ci/build-boost.sh"
+  CIBW_SKIP: "*-musllinux*"
   script:
     - curl -sSL https://get.docker.com/ | sh
     - python -m pip install cibuildwheel==2.18.0
