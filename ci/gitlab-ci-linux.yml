@@ -89,19 +89,11 @@
     DOCKER_DRIVER: overlay2
     # See https://github.com/docker-library/docker/pull/166
     DOCKER_TLS_CERTDIR: ""
-    CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_I686_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_PYPY_X86_64_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_PPC64LE_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_S390X_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_PYPY_AARCH64_IMAGE: "manylinux_2_28"
-    CIBW_MANYLINUX_PYPY_I686_IMAGE: "manylinux_2_28"
     CIBW_BEFORE_ALL_LINUX: "yum install -y wget && bash ci/build-boost.sh"
     CIBW_SKIP: "*-musllinux*"
   script:
     - curl -sSL https://get.docker.com/ | sh
-    - python -m pip install cibuildwheel==2.18.0
+    - python -m pip install cibuildwheel==2.19.2
     - cibuildwheel --output-dir wheelhouse
   artifacts:
     paths:
