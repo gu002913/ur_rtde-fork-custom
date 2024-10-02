@@ -1066,6 +1066,30 @@ $5.10|3.15    end
               exit_critical
               write_output_integer_reg(1, step_back)
               textmsg("read_contact_detection done")
+          elif cmd == 65:
+              textmsg("set_target_payload")
+              mass = read_input_float_reg(0)
+              cog_x = read_input_float_reg(1)
+              cog_y = read_input_float_reg(2)
+              cog_z = read_input_float_reg(3)
+              cog = [cog_x, cog_y, cog_z]
+              inertia = [0, 0, 0, 0, 0, 0]
+              inertia[0] = read_input_float_reg(4)
+              inertia[1] = read_input_float_reg(5)
+              inertia[2] = read_input_float_reg(6)
+              inertia[3] = read_input_float_reg(7)
+              inertia[4] = read_input_float_reg(8)
+              inertia[5] = read_input_float_reg(9)
+$5.10         if cog_x == 0 and cog_y == 0 and cog_z == 0:
+$5.10            set_target_payload(mass, get_target_payload_cog(), inertia)
+$5.10         else:
+$5.10            set_target_payload(mass, cog, inertia)
+$5.10         end
+$5.10         textmsg("active payload:")
+$5.10         textmsg(get_target_payload())
+$5.10         textmsg("active payload inertia matrix")
+$5.10         textmsg(get_target_payload_inertia())
+              textmsg("set_target_payload done")
           elif cmd == 254: # internal command
               textmsg("cmd == 254 - contact detected") 
 $5.4          stop_async_move()

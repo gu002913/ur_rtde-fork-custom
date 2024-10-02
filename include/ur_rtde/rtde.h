@@ -107,6 +107,7 @@ class RTDE
       START_CONTACT_DETECTION = 62,
       STOP_CONTACT_DETECTION = 63,
       READ_CONTACT_DETECTION = 64,
+      SET_TARGET_PAYLOAD = 65,
       WATCHDOG = 99,
       STOP_SCRIPT = 255
     };
@@ -132,7 +133,8 @@ class RTDE
       RECIPE_17 = 17,
       RECIPE_18 = 18,
       RECIPE_19 = 19,
-      RECIPE_20 = 20
+      RECIPE_20 = 20,
+      RECIPE_21 = 21
     };
 
     RobotCommand() : type_(NO_CMD), recipe_id_(1)
