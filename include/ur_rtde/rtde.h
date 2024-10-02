@@ -186,7 +186,7 @@ class RTDE
 
  public:
   RTDE_EXPORT void connect();
-  RTDE_EXPORT void disconnect();
+  RTDE_EXPORT void disconnect(bool send_pause = true);
   RTDE_EXPORT bool isConnected();
   RTDE_EXPORT bool isStarted();
   RTDE_EXPORT bool isDataAvailable();

@@ -88,7 +88,7 @@ RTDEReceiveInterface::RTDEReceiveInterface(std::string hostname, double frequenc
   th_ = std::make_shared<boost::thread>(boost::bind(&RTDEReceiveInterface::receiveCallback, this));
 
   // Wait until the first robot state has been received
-  while (!robot_state_->getFirstStateReceived())
+  while (isConnected() && !robot_state_->getFirstStateReceived())
   {
     // Wait for first state to be fully received
     std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -170,7 +170,8 @@ bool RTDEReceiveInterface::setupRecipes(const double& frequency)
       variables_.emplace_back("ft_raw_wrench");
 
     if ((major_version == 3 && minor_version >= 11) ||
-        (major_version == 5 && minor_version >= 5 && bugfix_version >= 1))
+        (major_version == 5 && minor_version >= 5 && bugfix_version >= 1) ||
+        (major_version == 5 && minor_version >= 6))
     {
       variables_.emplace_back("payload");
       variables_.emplace_back("payload_cog");
@@ -266,11 +267,11 @@ void RTDEReceiveInterface::receiveCallback()
 #endif
       }     
     }
-    catch (std::exception& e)
-    {
-      std::cerr << "RTDEReceiveInterface Exception: " << e.what() << std::endl;
-      if (rtde_->isConnected())
-        rtde_->disconnect();
+    catch (const boost::system::system_error& e) { // catch the boost exception
+      std::cerr << "RTDEReceiveInterface boost system Exception: (" << e.code() << ") " << e.what() << std::endl;
+      if (rtde_->isConnected()) {
+        rtde_->disconnect(e.code().value() != boost::asio::error::eof);
+      }
       stop_receive_thread = true;
       stop_record_thread = true;
     }
