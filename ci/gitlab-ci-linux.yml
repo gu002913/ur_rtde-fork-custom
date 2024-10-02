@@ -78,7 +78,7 @@
 
 .linux-cibuildwheel:
   stage: build_wheels
-  image: python:3.8
+  image: python:3.12
   # make a docker daemon available for cibuildwheel to use
   services:
     - name: docker:dind
@@ -93,7 +93,7 @@
     CIBW_SKIP: "*-musllinux*"
   script:
     - curl -sSL https://get.docker.com/ | sh
-    - python -m pip install cibuildwheel==2.18.0
+    - python -m pip install cibuildwheel==2.19.2
     - cibuildwheel --output-dir wheelhouse
   artifacts:
     paths:
