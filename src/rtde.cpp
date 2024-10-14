@@ -87,11 +87,12 @@ void RTDE::connect()
   }
 }
 
-void RTDE::disconnect()
+void RTDE::disconnect(bool send_pause)
 {
   if (ConnectionState::CONNECTED == conn_state_)
   {
-   sendPause();
+    if (send_pause)
+      sendPause();
   }
   /* We use reset() to safely close the socket,
    * see: https://stackoverflow.com/questions/3062803/how-do-i-cleanly-reconnect-a-boostsocket-following-a-disconnect

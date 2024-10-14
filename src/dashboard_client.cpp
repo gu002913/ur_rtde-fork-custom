@@ -88,7 +88,10 @@ void DashboardClient::disconnect()
 
 void DashboardClient::send(const std::string &str)
 {
-  boost::asio::write(*socket_, boost::asio::buffer(str));
+  if (socket_ != nullptr)
+    boost::asio::write(*socket_, boost::asio::buffer(str));
+  else
+    throw std::runtime_error("DashboardClient: Socket has not been instantiated, before calling send function.");
 }
 
 void DashboardClient::loadURP(const std::string &urp_name)
@@ -273,7 +276,10 @@ std::string DashboardClient::async_readline(AsyncReadStream &s, int timeout_ms)
 
 std::string DashboardClient::receive()
 {
-  return async_readline(*socket_);
+  if (socket_ != nullptr)
+    return async_readline(*socket_);
+  else
+    throw std::runtime_error("DashboardClient: Socket has not been instantiated, before calling receive function.");
 }
 
 std::string DashboardClient::robotmode()
@@ -419,7 +425,8 @@ void DashboardClient::check_deadline()
   // deadline before this actor had a chance to run.
   if (deadline_.expires_at() <= boost::asio::deadline_timer::traits_type::now())
   {
-    std::cout << "Dashboard client deadline expired" << std::endl;
+    if (verbose_)
+      std::cout << "Dashboard client deadline expired" << std::endl;
     // The deadline has passed. The socket is closed so that any outstanding
     // asynchronous operations are cancelled. This allows the blocked
     // connect(), read_line() or write_line() functions to return.

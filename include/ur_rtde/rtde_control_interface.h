@@ -1058,6 +1058,28 @@ class RTDEControlInterface
    */
   RTDE_EXPORT bool stopContactDetection();
 
+  /**
+   * @brief Sets the mass, center of gravity (abbr. CoG) and the inertia matrix of the active payload.
+   *
+   * This function must be called when the payload mass, the mass displacement (CoG) or the inertia
+   * matrix changes - (i.e. when the robot picks up or puts down a workpiece).
+   *
+   * Notes:
+   * - This script should be used instead of the deprecated set_payload, set_payload_mass, and set_payload_cog.
+   * - The payload mass and CoG are required, the inertia matrix is optional. When left out a zero
+   *   inertia matrix will be used.
+   * - The maximum value allowed for each component of the inertia matrix is +/- 133 kg*m^2. An exception is thrown
+   *   if limits are exceeded
+   *
+   * @param mass Mass in kilograms
+   * @param cog Center of Gravity, a vector [CoGx, CoGy, CoGz] specifying the displacement (in meters) from the
+   * toolmount.
+   * @param inertia payload inertia matrix (in kg*m^2), as a vector with six elements [Ixx, Iyy, Izz, Ixy, Ixz, Iyz]
+   * with origin in the CoG and the axes aligned with the tool flange axes.
+   */
+  RTDE_EXPORT bool setTargetPayload(double mass, const std::vector<double> &cog = {},
+                                    const std::vector<double> &inertia = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+
   // Unlocks a protective stop via the dashboard client.
   void unlockProtectiveStop();
 

@@ -710,7 +710,13 @@ bool RTDEControlInterface::setupRecipes(const double &frequency)
   std::vector<std::string> stopl_stopj_input = {inIntReg(0), inDoubleReg(0), inIntReg(1)};
   rtde_->sendInputSetup(stopl_stopj_input);
 
-  // Recipe 20 - external_force_torque should be last because its optional depending on flags
+  // Recipe 20
+  std::vector<std::string> set_target_payload_input = {inIntReg(0),    inDoubleReg(0), inDoubleReg(1), inDoubleReg(2),
+                                           inDoubleReg(3), inDoubleReg(4), inDoubleReg(5), inDoubleReg(6),
+                                           inDoubleReg(7), inDoubleReg(8), inDoubleReg(9)};
+  rtde_->sendInputSetup(set_target_payload_input);
+
+  // Recipe 21 - external_force_torque should be last because its optional depending on flags
   if (!no_ext_ft_)
   {
     std::vector<std::string> external_ft_input = {inIntReg(0), "external_force_torque"};
@@ -725,7 +731,7 @@ void RTDEControlInterface::receiveCallback()
   bool should_reconnect = false;
   // If someone calls disconnect() stop_thread_ is set to false, so we only
   // execute the while loop as long as stop_thread_ is true. But this check is
-  // not sufficient bnecause in case of a network connection loss, the rtde_
+  // not sufficient because in case of a network connection loss, the rtde_
   // connection is closed. Therefore we also need to check, if rtde_ is still
   // connected. only if these two requirements are met, it is safe to access
   // the rtde_ functions.
@@ -1996,7 +2002,7 @@ bool RTDEControlInterface::setExternalForceTorque(const std::vector<double> &ext
   {
     RTDE::RobotCommand robot_cmd;
     robot_cmd.type_ = RTDE::RobotCommand::Type::SET_EXTERNAL_FORCE_TORQUE;
-    robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_20;
+    robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_21;
     robot_cmd.val_ = external_force_torque;
     return sendCommand(robot_cmd);
   }
@@ -2106,6 +2112,29 @@ bool RTDEControlInterface::getInverseKinematicsHasSolution(const std::vector<dou
   {
     throw std::runtime_error("getInverseKinematicsHasSolution() function did not succeed!");
   }
+}
+
+bool RTDEControlInterface::setTargetPayload(double mass, const std::vector<double> &cog,
+                                            const std::vector<double> &inertia)
+{
+  RTDE::RobotCommand robot_cmd;
+  robot_cmd.type_ = RTDE::RobotCommand::Type::SET_TARGET_PAYLOAD;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_20;
+  robot_cmd.val_.push_back(mass);
+  if (!cog.empty())
+  {
+    for (const auto &val : cog)
+      robot_cmd.val_.push_back(val);
+  }
+  else
+  {
+    robot_cmd.val_.push_back(0);
+    robot_cmd.val_.push_back(0);
+    robot_cmd.val_.push_back(0);
+  }
+  for (const auto &val : inertia)
+    robot_cmd.val_.push_back(val);
+  return sendCommand(robot_cmd);
 }
 
 void RTDEControlInterface::unlockProtectiveStop()
