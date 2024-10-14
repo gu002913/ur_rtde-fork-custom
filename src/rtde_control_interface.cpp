@@ -35,9 +35,16 @@ static void verifyValueIsWithin(const double &value, const double &min, const do
   }
 }
 
-RTDEControlInterface::RTDEControlInterface(std::string hostname, double frequency, uint16_t flags, int ur_cap_port,
+RTDEControlInterface::RTDEControlInterface(std::string hostname,
+                                           std::string heartbeat_ip,
+                                           std::string heartbeat_port,
+                                           double frequency,
+                                           uint16_t flags,
+                                           int ur_cap_port,
                                            int rt_priority)
     : hostname_(std::move(hostname)),
+      heartbeat_ip_(std::move(heartbeat_ip)),
+      heartbeat_port_(std::move(heartbeat_port)),
       frequency_(frequency),
       upload_script_(flags & FLAG_UPLOAD_SCRIPT),
       use_external_control_ur_cap_(flags & FLAG_USE_EXT_UR_CAP),
@@ -138,6 +145,8 @@ RTDEControlInterface::RTDEControlInterface(std::string hostname, double frequenc
     register_offset_ = 0;
   }
 
+  std::cout << "control interface register_offset_ is: " << register_offset_ << std::endl;
+
   // Setup default recipes
   setupRecipes(frequency_);
 
@@ -183,6 +192,7 @@ RTDEControlInterface::RTDEControlInterface(std::string hostname, double frequenc
   {
     if (!isProgramRunning())
     {
+        script_client_->SetHeartBeatConfig(heartbeat_ip_, heartbeat_port_);
       // Send script to the UR Controller
       if (script_client_->sendScript())
         waitForProgramRunning();
@@ -2215,6 +2225,7 @@ bool RTDEControlInterface::sendCommand(const RTDE::RobotCommand &cmd)
             if (!isProgramRunning())
             {
               std::cerr << "RTDEControlInterface: RTDE control script is not running!" << std::endl;
+//              throw std::runtime_error("RTDE control script is not running!");
               sendClearCommand();
               return false;
             }
@@ -2280,6 +2291,7 @@ bool RTDEControlInterface::sendCommand(const RTDE::RobotCommand &cmd)
     else
     {
       std::cerr << "RTDEControlInterface: RTDE control script is not running!" << std::endl;
+//      throw std::runtime_error("RTDE control script is not running!");
       sendClearCommand();
       return false;
     }

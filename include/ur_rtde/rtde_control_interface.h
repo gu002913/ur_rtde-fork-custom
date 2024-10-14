@@ -196,7 +196,10 @@ class RTDEControlInterface
     FLAGS_DEFAULT = FLAG_UPLOAD_SCRIPT
   };
 
-  RTDE_EXPORT explicit RTDEControlInterface(std::string hostname, double frequency = -1.0,
+  RTDE_EXPORT explicit RTDEControlInterface(std::string hostname,
+                                            std::string heartbeat_ip,
+                                            std::string heartbeat_port,
+                                            double frequency = -1.0,
                                             uint16_t flags = FLAGS_DEFAULT, int ur_cap_port = 50002,
                                             int rt_priority = RT_PRIORITY_UNDEFINED);
 
@@ -1128,6 +1131,8 @@ class RTDEControlInterface
 
  private:
   std::string hostname_;
+  std::string heartbeat_ip_;
+  std::string heartbeat_port_;
   int port_;
   double frequency_;
   bool upload_script_;

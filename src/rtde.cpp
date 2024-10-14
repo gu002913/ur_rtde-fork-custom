@@ -387,7 +387,7 @@ void RTDE::receive()
       std::string in_use_str("IN_USE");
       if (datatypes.find(in_use_str) != std::string::npos)
       {
-        throw std::runtime_error(
+          throw std::runtime_error(
             "One of the RTDE input registers are already in use! Currently you must disable the EtherNet/IP adapter, "
             "PROFINET or any MODBUS unit configured on the robot. This might change in the future.");
       }

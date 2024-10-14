@@ -47,6 +47,7 @@ RTDEIOInterface::RTDEIOInterface(std::string hostname, bool verbose, bool use_up
   else
     register_offset_ = 0;
 
+  std::cout << "register_offset is: " << register_offset_ << std::endl;
   // Setup recipes
   setupRecipes();
 

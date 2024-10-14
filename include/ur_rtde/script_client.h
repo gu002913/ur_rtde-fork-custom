@@ -24,6 +24,9 @@ struct ScriptInjectItem
 class ScriptClient
 {
  public:
+  RTDE_EXPORT void SetHeartBeatConfig(const std::string &ip,
+                                      const std::string &port);
+ public:
   RTDE_EXPORT explicit ScriptClient(std::string hostname, uint32_t major_control_version,
                                     uint32_t minor_control_version, int port = 30003, bool verbose = false);
 

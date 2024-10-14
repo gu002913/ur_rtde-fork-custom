@@ -118,7 +118,7 @@ class DashboardClient
    * The unlock protective stop command fails with an exception if less than 5
    * seconds has passed since the protective stop occurred.
    */
-  RTDE_EXPORT void unlockProtectiveStop();
+  RTDE_EXPORT bool unlockProtectiveStop();
 
   /**
    * @brief Use this when robot gets a safety fault or violation to restart the safety.

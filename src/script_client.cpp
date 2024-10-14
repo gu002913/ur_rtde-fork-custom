@@ -14,8 +14,38 @@
 
 using boost::asio::ip::tcp;
 
+// heart beat func =============================================================
+namespace
+{
+    template<typename ... Args>
+    std::string script_format(const std::string &format, Args ... args)
+    {
+        int size_s = std::snprintf(nullptr, 0, format.c_str(), args ...) +
+                     1; // Extra space for '\0'
+        if (size_s <= 0)
+        { throw std::runtime_error("Error during formatting."); }
+        auto size = static_cast<size_t>( size_s );
+        std::unique_ptr<char[]> buf(new char[size]);
+        std::snprintf(buf.get(), size, format.c_str(), args ...);
+        return std::string(buf.get(), buf.get() + size -
+                                      1); // We don't want the '\0' inside
+    }
+
+    std::string k_heartbeat_ip = "foo";
+    std::string k_heartbeat_port = "foo";
+}
+
+// =============================================================================
+
 namespace ur_rtde
 {
+void ScriptClient::SetHeartBeatConfig(const std::string &ip,
+                                      const std::string &port)
+{
+    k_heartbeat_ip = ip;
+    k_heartbeat_port = port;
+}
+
 ScriptClient::ScriptClient(std::string hostname, uint32_t major_control_version, uint32_t minor_control_version,
                            int port, bool verbose)
     : hostname_(std::move(hostname)),
@@ -224,6 +254,10 @@ bool ScriptClient::sendScript()
     return false;
   // Scan the script for injection points where additional script code can be injected.
   scanAndInjectAdditionalScriptCode(ur_script);
+
+  // add heartbeat variables ===================================================
+  ur_script = script_format(ur_script, k_heartbeat_ip.c_str(), k_heartbeat_port.c_str());
+  // ===========================================================================
 
   if (isConnected() && !ur_script.empty())
   {

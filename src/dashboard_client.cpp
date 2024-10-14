@@ -61,6 +61,7 @@ void DashboardClient::connect(uint32_t timeout_ms)
   } while (ec == boost::asio::error::would_block);
   if (ec || !socket_->is_open())
   {
+    return;
     throw std::runtime_error("Timeout connecting to UR dashboard server.");
   }
   conn_state_ = ConnectionState::CONNECTED;
@@ -215,15 +216,18 @@ void DashboardClient::brakeRelease()
   receive();
 }
 
-void DashboardClient::unlockProtectiveStop()
+bool DashboardClient::unlockProtectiveStop()
 {
   std::string unlock_p_stop = "unlock protective stop\n";
   send(unlock_p_stop);
   auto result = receive();
   if (result != "Protective stop releasing")
   {
-    throw std::logic_error("Unlock protective stop failure: " + result);
+//    throw std::logic_error("Unlock protective stop failure: " + result);
+      return false;
   }
+
+  return true;
 }
 
 template <typename AsyncReadStream>
