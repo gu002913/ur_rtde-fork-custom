@@ -459,6 +459,8 @@ class RTDEReceiveInterface
    */
   RTDE_EXPORT std::vector<double> getPayloadInertia();
 
+  RTDE_EXPORT double getRtdeFrequency();
+
   RTDE_EXPORT void receiveCallback();
 
   RTDE_EXPORT void recordCallback();

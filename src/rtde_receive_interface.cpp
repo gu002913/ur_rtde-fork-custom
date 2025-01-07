@@ -788,6 +788,23 @@ std::vector<double> RTDEReceiveInterface::getPayloadInertia()
     throw std::runtime_error("unable to get state data for specified key: payload_inertia");
 }
 
+double RTDEReceiveInterface::getRtdeFrequency()
+{
+    auto controller_version = rtde_->getControllerVersion();
+    uint32_t major_version = std::get<MAJOR_VERSION>(controller_version);
+    double freq;
+    if (major_version > CB3_MAJOR_VERSION)
+    {
+        freq =  500.0;
+    }
+    else
+    {
+        freq =  125.0;
+    }
+
+    return freq;
+}
+
 bool RTDEReceiveInterface::isProtectiveStopped()
 {
   if (robot_state_ != nullptr)
